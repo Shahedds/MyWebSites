@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaheds Hospital</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff; /* Baby blue */
+            color: #333;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        header {
+            background: #b0c4de; /* Silver */
+            color: #fff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #77a0a9 3px solid;
+        }
+        header a, header h1 {
+            color: #fff;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        header a:hover {
+            color: #333;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav ul {
+            padding: 0;
+            list-style: none;
+        }
+        nav ul li {
+            display: inline;
+            margin: 0 5px;
+        }
+        .main {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"], input[type="number"], input[type="date"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            color: #fff;
+            background: #77a0a9;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #555;
+        }
+        .patient-list {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Shaheds Hospital</h1>
+            <nav>
+                <ul>
+                    <li><a href="#" id="addPatientLink">Add Patient</a></li>
+                    <li><a href="#" id="searchPatientLink">Search Patient</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+ 
+    <div class="container">
+        <div class="main" id="addPatient">
+            <h2>Add Patient</h2>
+            <form id="patientForm">
+                <input type="text" id="name" placeholder="Name" required>
+                <input type="number" id="age" placeholder="Age" required>
+                <input type="text" id="diagnosis" placeholder="Diagnosis" required>
+                <select id="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+                <input type="text" id="medicalHistory" placeholder="Medical History" required>
+                <button type="button" onclick="addPatient()">Add Patient</button>
+            </form>
+            <div id="addResult"></div>
+        </div>
+ 
+        <div class="main" id="searchPatient" style="display:none;">
+            <h2>Search Patient</h2>
+            <input type="text" id="searchName" placeholder="Enter patient name">
+            <button type="button" onclick="searchPatient()">Search</button>
+            <div class="patient-list" id="searchResult"></div>
+        </div>
+    </div>
+ 
+    <script>
+        document.getElementById('addPatientLink').addEventListener('click', () => {
+            document.getElementById('addPatient').style.display = 'block';
+            document.getElementById('searchPatient').style.display = 'none';
+        });
+ 
+        document.getElementById('searchPatientLink').addEventListener('click', () => {
+            document.getElementById('addPatient').style.display = 'none';
+            document.getElementById('searchPatient').style.display = 'block';
+        });
+ 
+        async function addPatient() {
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const diagnosis = document.getElementById('diagnosis').value;
+            const gender = document.getElementById('gender').value;
+            const medicalHistory = document.getElementById('medicalHistory').value;
+            const addResultDiv = document.getElementById('addResult');
+ 
+            if (!name || !age || !diagnosis || !gender || !medicalHistory) {
+                addResultDiv.innerHTML = 'Please fill in all fields.';
+                return;
+            }
+ 
+            const apiUrl = 'https://6xn1xblwv3.execute-api.us-east-1.amazonaws.com/production/patientsrc';
+ 
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        age: age,
+                        diagnosis: diagnosis,
+                        gender: gender,
+                        medicalHistory: medicalHistory
+                    })
+                });
+ 
+                const data = await response.json();
+ 
+                if (response.ok) {
+                    addResultDiv.innerHTML = `<h2>Success</h2><p>${data.message}</p>`;
+                } else {
+                    addResultDiv.innerHTML = `<h2>Error</h2><p>${data.error}</p>`;
+                }
+            } catch (error) {
+                addResultDiv.innerHTML = `<h2>Error</h2><p>${error.message}</p>`;
+            }
+        }
+ 
+        async function searchPatient() {
+            const name = document.getElementById('searchName').value;
+            const searchResultDiv = document.getElementById('searchResult');
+ 
+            if (!name) {
+                searchResultDiv.innerHTML = 'Please enter a patient name.';
+                return;
+            }
+ 
+            const apiUrl = `https://6xn1xblwv3.execute-api.us-east-1.amazonaws.com/production/patientsrc?name=${name}`;
+ 
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+ 
+                if (response.ok) {
+                    if (data.Items.length > 0) {
+                        const patient = data.Items[0];
+                        searchResultDiv.innerHTML = `<h2>Patient Information</h2>
+                                                     <p>Name: ${patient.name.S}</p>
+                                                     <p>Age: ${patient.age.S}</p>
+                                                     <p>Diagnosis: ${patient.diagnosis.S}</p>
+                                                     <p>Gender: ${patient.gender.S}</p>
+                                                     <p>Medical History: ${patient.medicalHistory.S}</p>`;
+                    } else {
+                        searchResultDiv.innerHTML = `<h2>No patient found with name ${name}</h2>`;
+                    }
+                } else {
+                    searchResultDiv.innerHTML = `<h2>Error</h2><p>${data.error}</p>`;
+                }
+            } catch (error) {
+                searchResultDiv.innerHTML = `<h2>Error</h2><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
